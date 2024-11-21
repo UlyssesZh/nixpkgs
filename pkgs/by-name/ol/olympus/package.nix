@@ -67,15 +67,14 @@ in
 buildDotnetModule rec {
   inherit pname;
 
-  # FIXME: I made up this version number.
-  version = "24.07.06.02";
+  version = "24.10.27.01";
 
   src = fetchFromGitHub {
     owner = "EverestAPI";
     repo = "Olympus";
-    rev = "5f3e40687eb825c57021f52d83a3bc9a82c04bdb";
+    rev = "3ab5d063bb3eef815dbf6bb76e0d225af5f814be";
     fetchSubmodules = true; # Required. See upstream's README.
-    hash = "sha256-rNh6sH51poahiV0Mb61lHfzqOkPF2pW2wr7MOrfVSVs=";
+    hash = "sha256-7H5rO2PG19xS+FE/4ZkvuObReASWlaMVhAd4Ou9oDrs=";
   };
 
   executables = [ ];
@@ -154,6 +153,8 @@ buildDotnetModule rec {
     install -Dm644 src/data/icon.png $out/share/icons/hicolor/128x128/apps/olympus.png
     install -Dm644 LICENSE $out/share/licenses/${pname}/LICENSE
   '';
+
+  passthru.updateScript = ./update.sh;
 
   meta = {
     description = "Cross-platform GUI Everest installer and Celeste mod manager";
