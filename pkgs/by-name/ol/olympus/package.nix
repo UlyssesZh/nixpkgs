@@ -59,15 +59,18 @@ let
     buildInputs = [ sqlite.dev ];
   };
 
-  dotnet-out = "sharp/bin/Release/net452";
-  pname = "olympus";
-  phome = "$out/lib/${pname}";
+  mono = mono4;
   nfd = lua51Packages.nfd;
-in
-buildDotnetModule rec {
-  inherit pname;
 
+  dotnet-out = "sharp/bin/Release/net452";
+  phome = "$out/lib/${pname}";
+  projectFile = "sharp/Olympus.Sharp.sln";
+
+  pname = "olympus";
   version = "24.10.27.01";
+in
+buildDotnetModule {
+  inherit pname version projectFile;
 
   src = fetchFromGitHub {
     owner = "EverestAPI";
@@ -86,7 +89,7 @@ buildDotnetModule rec {
 
   buildInputs = [
     love
-    mono4
+    mono
     nfd
     lua-subprocess
     lsqlite3
@@ -98,8 +101,6 @@ buildDotnetModule rec {
 
   nugetDeps = ./deps.nix;
 
-  projectFile = "sharp/Olympus.Sharp.sln";
-
   postConfigure = ''
     echo '${version}-nixos' > src/version.txt
   '';
@@ -108,7 +109,7 @@ buildDotnetModule rec {
   # Copied from `olympus` in AUR.
   buildPhase = ''
     runHook preBuild
-    FrameworkPathOverride=${mono4.out}/lib/mono/4.5 msbuild ${projectFile} /p:Configuration=Release
+    FrameworkPathOverride=${mono}/lib/mono/4.5 msbuild ${projectFile} /p:Configuration=Release
     runHook postBuild
   '';
 
@@ -118,7 +119,7 @@ buildDotnetModule rec {
   #
   # I assume --fused is so saves are properly made (https://love2d.org/wiki/love.filesystem)
   postBuild = ''
-    makeWrapper ${mono4.out}/bin/mono ${dotnet-out}/Olympus.Sharp.bin.x86 \
+    makeWrapper ${lib.getExe mono} ${dotnet-out}/Olympus.Sharp.bin.x86 \
       --add-flags ${phome}/sharp/Olympus.Sharp.exe
     cp ${dotnet-out}/Olympus.Sharp.bin.x86 ${dotnet-out}/Olympus.Sharp.bin.x86_64
   '';
@@ -127,14 +128,14 @@ buildDotnetModule rec {
   # It is used to launch Loenn from Olympus.
   installPhase =
     let
-      subprocess-cpath = "${lua-subprocess.out}/lib/lua/5.1/?.so";
-      nfd-cpath = "${nfd.out}/lib/lua/5.1/?.so";
-      lsqlite3-cpath = "${lsqlite3.out}/lib/lua/5.1/?.so";
+      subprocess-cpath = "${lua-subprocess}/lib/lua/5.1/?.so";
+      nfd-cpath = "${nfd}/lib/lua/5.1/?.so";
+      lsqlite3-cpath = "${lsqlite3}/lib/lua/5.1/?.so";
     in
     ''
       runHook preInstall
       mkdir -p $out/bin
-      makeWrapper ${love.out}/bin/love ${phome}/find-love \
+      makeWrapper ${lib.getExe love} ${phome}/find-love \
         --add-flags "--fused"
       makeWrapper ${phome}/find-love $out/bin/olympus \
         --prefix LUA_CPATH : "${nfd-cpath};${subprocess-cpath};${lsqlite3-cpath}" \
@@ -167,5 +168,9 @@ buildDotnetModule rec {
     ];
     mainProgram = "olympus";
     platforms = lib.platforms.unix;
+    sourceProvenance = with lib.sourceTypes; [
+      fromSource
+      binaryNativeCode # Source contains binary; see https://github.com/EverestAPI/Olympus/tree/main/lib-linux/sharp
+    ];
   };
 }
