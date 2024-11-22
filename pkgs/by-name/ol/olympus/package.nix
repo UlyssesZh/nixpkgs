@@ -3,9 +3,9 @@
   fetchFromGitHub,
   fetchzip,
   buildDotnetModule,
-  mono4,
+  mono,
   love,
-  lua51Packages,
+  luajitPackages,
   msbuild,
   sqlite,
   curl,
@@ -23,7 +23,8 @@
 # I'm pretty sure thats by user so end user needs to do it
 
 let
-  lua-subprocess = lua51Packages.buildLuarocksPackage {
+  luaPackages = luajitPackages;
+  lua-subprocess = luaPackages.buildLuarocksPackage {
     pname = "subprocess";
     version = "bfa8e9";
     src = fetchFromGitHub {
@@ -34,6 +35,16 @@ let
     };
     rockspecFilename = "subprocess-scm-1.rockspec";
   };
+  lsqlite3 = luaPackages.buildLuarocksPackage {
+    pname = "lsqlite3";
+    version = "0.9.6-1";
+    src = fetchzip {
+      url = "http://lua.sqlite.org/index.cgi/zip/lsqlite3_v096.zip";
+      hash = "sha256-Mq409A3X9/OS7IPI/KlULR6ZihqnYKk/mS/W/2yrGBg=";
+    };
+    buildInputs = [ sqlite.dev ];
+  };
+  nfd = luaPackages.nfd;
 
   # NOTE: on installation olympus uses MiniInstallerLinux which is dynamically linked, this makes it run fine
   fhs-env = buildFHSEnv {
@@ -45,32 +56,17 @@ let
         stdenv.cc.cc
         libgcc.lib
         openssl
+        dotnet-runtime
       ]);
     runScript = "bash";
   };
 
-  lsqlite3 = lua51Packages.buildLuarocksPackage {
-    pname = "lsqlite3";
-    version = "0.9.6-1";
-    src = fetchzip {
-      url = "http://lua.sqlite.org/index.cgi/zip/lsqlite3_v096.zip";
-      hash = "sha256-Mq409A3X9/OS7IPI/KlULR6ZihqnYKk/mS/W/2yrGBg=";
-    };
-    buildInputs = [ sqlite.dev ];
-  };
-
-  mono = mono4;
-  nfd = lua51Packages.nfd;
-
-  dotnet-out = "sharp/bin/Release/net452";
-  phome = "$out/lib/${pname}";
-  projectFile = "sharp/Olympus.Sharp.sln";
-
   pname = "olympus";
   version = "24.10.27.01";
+  phome = "$out/lib/${pname}";
 in
 buildDotnetModule {
-  inherit pname version projectFile;
+  inherit pname version;
 
   src = fetchFromGitHub {
     owner = "EverestAPI";
@@ -80,10 +76,7 @@ buildDotnetModule {
     hash = "sha256-7H5rO2PG19xS+FE/4ZkvuObReASWlaMVhAd4Ou9oDrs=";
   };
 
-  executables = [ ];
-
   nativeBuildInputs = [
-    msbuild
     libarchive # To create the .love file (zip format)
   ];
 
@@ -96,36 +89,31 @@ buildDotnetModule {
   ];
 
   runtimeInputs = [
-    xdg-utils
+    xdg-utils # used by Olympus to check installation completeness
   ];
 
   nugetDeps = ./deps.nix;
+  projectFile = "sharp/Olympus.Sharp.csproj";
+  executables = [ ];
 
-  postConfigure = ''
-    echo '${version}-nixos' > src/version.txt
-  '';
-
-  # TODO: the override is needed for it to run. Should be found out why
-  # Copied from `olympus` in AUR.
-  buildPhase = ''
-    runHook preBuild
-    FrameworkPathOverride=${mono}/lib/mono/4.5 msbuild ${projectFile} /p:Configuration=Release
-    runHook postBuild
+  preConfigure = ''
+    echo ${version} > src/version.txt
   '';
 
   # Hack Olympus.Sharp.bin.{x86,x86_64} to use system mono.
   # This was proposed by @0x0ade on discord.gg/celeste:
   # https://discord.com/channels/403698615446536203/514006912115802113/827507533962149900
-  #
-  # I assume --fused is so saves are properly made (https://love2d.org/wiki/love.filesystem)
   postBuild = ''
-    makeWrapper ${lib.getExe mono} ${dotnet-out}/Olympus.Sharp.bin.x86 \
+    dotnet_out=sharp/bin/Release/net452
+    dotnet_out=$dotnet_out/$(ls $dotnet_out)
+    makeWrapper ${lib.getExe mono} $dotnet_out/Olympus.Sharp.bin.x86 \
       --add-flags ${phome}/sharp/Olympus.Sharp.exe
-    cp ${dotnet-out}/Olympus.Sharp.bin.x86 ${dotnet-out}/Olympus.Sharp.bin.x86_64
+    cp $dotnet_out/Olympus.Sharp.bin.x86 $dotnet_out/Olympus.Sharp.bin.x86_64
   '';
 
   # The script find-love is hacked to use love from nixpkgs.
   # It is used to launch Loenn from Olympus.
+  # I assume --fused is so saves are properly made (https://love2d.org/wiki/love.filesystem)
   installPhase =
     let
       subprocess-cpath = "${lua-subprocess}/lib/lua/5.1/?.so";
@@ -134,6 +122,7 @@ buildDotnetModule {
     in
     ''
       runHook preInstall
+
       mkdir -p $out/bin
       makeWrapper ${lib.getExe love} ${phome}/find-love \
         --add-flags "--fused"
@@ -143,7 +132,11 @@ buildDotnetModule {
         --add-flags "${phome}/olympus.love"
       mkdir -p ${phome}
       bsdtar --format zip --strip-components 1 -cf ${phome}/olympus.love src
-      install -Dm755 ${dotnet-out}/* -t ${phome}/sharp
+
+      dotnet_out=sharp/bin/Release/net452
+      dotnet_out=$dotnet_out/$(ls $dotnet_out)
+      install -Dm755 $dotnet_out/* -t ${phome}/sharp
+
       runHook postInstall
     '';
 
