@@ -2,14 +2,15 @@
   lib,
   fetchFromGitHub,
   fetchzip,
+  buildFHSEnv,
   buildDotnetModule,
-  mono,
-  love,
   luajitPackages,
   sqlite,
-  curl,
   libarchive,
-  buildFHSEnv,
+  curl,
+  mono,
+  love,
+  xdg-utils,
   # Some examples for celesteWrapper:
   # - null or "": Do not use wrapper.
   # - steam-run: Use steam-run.
@@ -130,8 +131,9 @@ buildDotnetModule {
 
     mkdir -p $out/bin
     makeWrapper ${phome}/find-love $out/bin/olympus \
-      --prefix LUA_CPATH ; "${lua_cpath}" \
+      --prefix LUA_CPATH ";" "${lua_cpath}" \
       --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ curl ]}" \
+      --suffix PATH : "${lib.makeBinPath [ xdg-utils ]}" \
       --set-default OLYMPUS_MINIINSTALLER_WRAPPER "${miniinstaller-wrapper}" \
       --set-default OLYMPUS_CELESTE_WRAPPER "${celeste-wrapper}" \
       --add-flags ${phome}/olympus.love
