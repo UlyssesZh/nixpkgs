@@ -1,5 +1,6 @@
 {
+  steam-run,
   callPackage,
 }:
 
-callPackage ../olympus/package.nix { with-steam-run = true; }
+callPackage ../olympus/package.nix { celesteWrapper = steam-run; }

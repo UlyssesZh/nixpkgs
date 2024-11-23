@@ -10,11 +10,14 @@
   curl,
   libarchive,
   buildFHSEnv,
-  steam-run,
-  # With this option enabled, Olympus will use steam-run to launch Celeste.
-  # Users should enable this only if olympus and steam are from the same nixpkgs.
-  # In either case, users can set OLYMPUS_CELESTE_WRAPPER=steam-run manually.
-  with-steam-run ? false,
+  # Some examples for celesteWrapper:
+  # - null: Do not use wrapper.
+  # - steam-run: Use steam-run.
+  # - "steam-run": Use steam-run command available from PATH.
+  # - buildFHSEnv { ... }: Use a custom FHS env.
+  # - writeShellScript { ... }: Use a custom shell script.
+  # In any case, it can be overridden at runtime by OLYMPUS_CELESTE_WRAPPER.
+  celesteWrapper ? null,
 }:
 
 let
@@ -43,7 +46,7 @@ let
 
   # When installing Everest, Olympus uses MiniInstaller, which is dynamically linked.
   miniinstaller-fhs = buildFHSEnv {
-    name = "olympus-fhs";
+    name = "olympus-miniinstaller-fhs";
     targetPkgs =
       pkgs:
       (with pkgs; [
@@ -55,7 +58,17 @@ let
       ]);
     runScript = "bash";
   };
-  miniinstaller-fhs-executable = "${miniinstaller-fhs}/bin/${miniinstaller-fhs.name}";
+  miniinstaller-wrapper = "${miniinstaller-fhs}/bin/${miniinstaller-fhs.name}";
+
+  celeste-wrapper =
+    if celesteWrapper == null || builtins.typeOf celesteWrapper == "string" then
+      celesteWrapper
+    else if builtins.hasAttr "executable" celesteWrapper && celesteWrapper.executable then
+      celesteWrapper
+    else if lib.isDerivation celesteWrapper then
+      lib.getExe celesteWrapper
+    else
+      celesteWrapper;
 
   pname = "olympus";
   phome = "$out/lib/${pname}";
@@ -121,8 +134,12 @@ buildDotnetModule {
       makeWrapper ${phome}/find-love $out/bin/olympus \
         --prefix LUA_CPATH : "${nfd-cpath};${subprocess-cpath};${lsqlite3-cpath}" \
         --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ curl ]} \
-        --set-default OLYMPUS_MINIINSTALLER_WRAPPER ${miniinstaller-fhs-executable} \
-        ${lib.optionalString with-steam-run "--set-default OLYMPUS_CELESTE_WRAPPER ${lib.getExe steam-run}"} \
+        --set-default OLYMPUS_MINIINSTALLER_WRAPPER ${miniinstaller-wrapper} \
+        ${
+          lib.optionalString (
+            celeste-wrapper != null
+          ) "--set-default OLYMPUS_CELESTE_WRAPPER ${celeste-wrapper}"
+        } \
         --add-flags "${phome}/olympus.love"
       bsdtar --format zip --strip-components 1 -cf ${phome}/olympus.love src
 
@@ -152,9 +169,5 @@ buildDotnetModule {
     ];
     mainProgram = "olympus";
     platforms = lib.platforms.unix;
-    sourceProvenance = with lib.sourceTypes; [
-      fromSource
-      binaryNativeCode # Source contains binary; see lib-linux/sharp dir in upstream source.
-    ];
   };
 }
