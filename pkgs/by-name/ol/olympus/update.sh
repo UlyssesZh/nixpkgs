@@ -1,7 +1,10 @@
 #!/usr/bin/env nix-shell
-#!nix-shell -i bash -p curl jq common-updater-scripts
+#!nix-shell -i bash -p curl jq common-updater-scripts nixfmt-rfc-style
 
 set -eu -o pipefail
+
+attr=olympus
+nix_file=$(nix-instantiate --eval --strict -A "$attr.meta.position" | sed -re 's/^"(.*):[0-9]+"$/\1/')
 
 api() {
   curl -s "https://dev.azure.com/EverestAPI/Olympus/_apis/$1?api-version=7.1"
@@ -19,11 +22,12 @@ run_id=$(api pipelines/$pipeline_id/runs | jq -r '
   | max_by(.finishedDate)
   | .id
 ')
+sed -i 's|buildId\s*=\s*".*";|buildId = "'$run_id'";|' $nix_file
 
 run=$(api pipelines/$pipeline_id/runs/$run_id)
-
 commit=$(echo "$run" | jq -r '.resources.repositories.self.version')
 version=$(echo "$run" | jq -r '.name')
-update-source-version olympus $version --rev=$commit
+update-source-version $attr $version --rev=$commit
 
-"$(nix-build --attr olympus.fetch-deps --no-out-link)"
+"$(nix-build --attr $attr.fetch-deps --no-out-link)"
+nixfmt $(dirname $nix_file)/deps.nix # NixOS/nixpkgs#358025

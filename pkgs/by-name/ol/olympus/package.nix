@@ -6,21 +6,16 @@
   mono,
   love,
   luajitPackages,
-  msbuild,
   sqlite,
   curl,
   libarchive,
   buildFHSEnv,
-  xdg-utils,
+  steam-run,
+  # With this option enabled, Olympus will use steam-run to launch Celeste.
+  # Users should enable this only if olympus and steam are from the same nixpkgs.
+  # In either case, users can set OLYMPUS_CELESTE_WRAPPER=steam-run manually.
+  with-steam-run ? false,
 }:
-# WONTFIX: On NixOS, cannot launch Steam installations of Everest / Celeste from Olympus.
-# The way it launches Celeste is by directly executing steamapps/common/Celeste/Celeste,
-# and it does not work on NixOS (even with steam-run).
-# This should be considered a bug of Steam on NixOS (and is probably very hard to fix).
-# https://github.com/EverestAPI/Olympus/issues/94 could be a temporary fix
-
-# FIXME: olympus checks if xdg-mime x-scheme-handler/everest for a popup. If it's not set it complains about it.
-# I'm pretty sure thats by user so end user needs to do it
 
 let
   luaPackages = luajitPackages;
@@ -46,8 +41,8 @@ let
   };
   nfd = luaPackages.nfd;
 
-  # NOTE: on installation olympus uses MiniInstallerLinux which is dynamically linked, this makes it run fine
-  fhs-env = buildFHSEnv {
+  # When installing Everest, Olympus uses MiniInstaller, which is dynamically linked.
+  miniinstaller-fhs = buildFHSEnv {
     name = "olympus-fhs";
     targetPkgs =
       pkgs:
@@ -56,52 +51,45 @@ let
         stdenv.cc.cc
         libgcc.lib
         openssl
-        dotnet-runtime
+        dotnet-runtime # Without this, MiniInstaller will install dotnet itself.
       ]);
     runScript = "bash";
   };
+  miniinstaller-fhs-executable = "${miniinstaller-fhs}/bin/${miniinstaller-fhs.name}";
 
   pname = "olympus";
-  version = "24.10.27.01";
   phome = "$out/lib/${pname}";
+  # The following variables are to be updated by the update script.
+  version = "24.11.23.01";
+  buildId = "4418"; # IMPORTANT: This line is matched with regex in update.sh.
+  rev = "d05f50fae23d741c9b6f72ba8fd951dca1a6e0f0";
 in
 buildDotnetModule {
   inherit pname version;
 
   src = fetchFromGitHub {
+    inherit rev;
     owner = "EverestAPI";
     repo = "Olympus";
-    rev = "3ab5d063bb3eef815dbf6bb76e0d225af5f814be";
     fetchSubmodules = true; # Required. See upstream's README.
-    hash = "sha256-7H5rO2PG19xS+FE/4ZkvuObReASWlaMVhAd4Ou9oDrs=";
+    hash = "sha256-SjSdcYAO6Do+OkHPMut+V7VwqBBFIkeHl8gjDIwocc0=";
   };
 
   nativeBuildInputs = [
-    libarchive # To create the .love file (zip format)
-  ];
-
-  buildInputs = [
-    love
-    mono
-    nfd
-    lua-subprocess
-    lsqlite3
-  ];
-
-  runtimeInputs = [
-    xdg-utils # used by Olympus to check installation completeness
+    libarchive # To create the .love file (zip format).
   ];
 
   nugetDeps = ./deps.nix;
   projectFile = "sharp/Olympus.Sharp.csproj";
   executables = [ ];
 
+  # See the 'Dist: Update src/version.txt' step in azure-pipelines.yml from upstream.
   preConfigure = ''
-    echo ${version} > src/version.txt
+    echo ${version}-nixos-${buildId}-${builtins.substring 0 5 rev} > src/version.txt
   '';
 
   # Hack Olympus.Sharp.bin.{x86,x86_64} to use system mono.
-  # This was proposed by @0x0ade on discord.gg/celeste:
+  # This was proposed by @0x0ade on discord.gg/celeste.
   # https://discord.com/channels/403698615446536203/514006912115802113/827507533962149900
   postBuild = ''
     dotnet_out=sharp/bin/Release/net452
@@ -113,7 +101,13 @@ buildDotnetModule {
 
   # The script find-love is hacked to use love from nixpkgs.
   # It is used to launch Loenn from Olympus.
-  # I assume --fused is so saves are properly made (https://love2d.org/wiki/love.filesystem)
+  # I assume --fused is so saves are properly made (https://love2d.org/wiki/love.filesystem).
+  preInstall = ''
+    mkdir -p ${phome}
+    makeWrapper ${lib.getExe love} ${phome}/find-love \
+      --add-flags "--fused"
+  '';
+
   installPhase =
     let
       subprocess-cpath = "${lua-subprocess}/lib/lua/5.1/?.so";
@@ -124,13 +118,12 @@ buildDotnetModule {
       runHook preInstall
 
       mkdir -p $out/bin
-      makeWrapper ${lib.getExe love} ${phome}/find-love \
-        --add-flags "--fused"
       makeWrapper ${phome}/find-love $out/bin/olympus \
         --prefix LUA_CPATH : "${nfd-cpath};${subprocess-cpath};${lsqlite3-cpath}" \
         --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ curl ]} \
+        --set-default OLYMPUS_MINIINSTALLER_WRAPPER ${miniinstaller-fhs-executable} \
+        ${lib.optionalString with-steam-run "--set-default OLYMPUS_CELESTE_WRAPPER ${lib.getExe steam-run}"} \
         --add-flags "${phome}/olympus.love"
-      mkdir -p ${phome}
       bsdtar --format zip --strip-components 1 -cf ${phome}/olympus.love src
 
       dotnet_out=sharp/bin/Release/net452
@@ -140,9 +133,7 @@ buildDotnetModule {
       runHook postInstall
     '';
 
-  # we need to force olympus to use the fhs-env
   postInstall = ''
-    sed -i 's|^exec|& ${fhs-env}/bin/olympus-fhs|' $out/bin/olympus
     install -Dm644 lib-linux/olympus.desktop $out/share/applications/olympus.desktop
     install -Dm644 src/data/icon.png $out/share/icons/hicolor/128x128/apps/olympus.png
     install -Dm644 LICENSE $out/share/licenses/${pname}/LICENSE
@@ -153,7 +144,7 @@ buildDotnetModule {
   meta = {
     description = "Cross-platform GUI Everest installer and Celeste mod manager";
     homepage = "https://github.com/EverestAPI/Olympus";
-    changelog = "https://github.com/EverestAPI/Olympus/blob/main/changelog.txt";
+    downloadPage = "https://everestapi.github.io/#olympus";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [
       ulysseszhan
@@ -163,7 +154,7 @@ buildDotnetModule {
     platforms = lib.platforms.unix;
     sourceProvenance = with lib.sourceTypes; [
       fromSource
-      binaryNativeCode # Source contains binary; see https://github.com/EverestAPI/Olympus/tree/main/lib-linux/sharp
+      binaryNativeCode # Source contains binary; see lib-linux/sharp dir in upstream source.
     ];
   };
 }
