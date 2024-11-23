@@ -11,38 +11,44 @@
   libarchive,
   buildFHSEnv,
   # Some examples for celesteWrapper:
-  # - null: Do not use wrapper.
+  # - null or "": Do not use wrapper.
   # - steam-run: Use steam-run.
   # - "steam-run": Use steam-run command available from PATH.
   # - buildFHSEnv { ... }: Use a custom FHS env.
-  # - writeShellScript { ... }: Use a custom shell script.
+  # - writeShellScriptBin { ... }: Use a custom script.
+  # - ./my-wrapper.sh: Use a custom script.
   # In any case, it can be overridden at runtime by OLYMPUS_CELESTE_WRAPPER.
   celesteWrapper ? null,
 }:
 
 let
-  luaPackages = luajitPackages;
-  lua-subprocess = luaPackages.buildLuarocksPackage {
-    pname = "subprocess";
-    version = "bfa8e9";
-    src = fetchFromGitHub {
-      owner = "0x0ade"; # a developer of Everest
-      repo = "lua-subprocess";
-      rev = "bfa8e97da774141f301cfd1106dca53a30a4de54";
-      hash = "sha256-4LiYWB3PAQ/s33Yj/gwC+Ef1vGe5FedWexeCBVSDIV0=";
-    };
-    rockspecFilename = "subprocess-scm-1.rockspec";
-  };
-  lsqlite3 = luaPackages.buildLuarocksPackage {
-    pname = "lsqlite3";
-    version = "0.9.6-1";
-    src = fetchzip {
-      url = "http://lua.sqlite.org/index.cgi/zip/lsqlite3_v096.zip";
-      hash = "sha256-Mq409A3X9/OS7IPI/KlULR6ZihqnYKk/mS/W/2yrGBg=";
-    };
-    buildInputs = [ sqlite.dev ];
-  };
-  nfd = luaPackages.nfd;
+  lua_cpath =
+    with luajitPackages;
+    lib.concatMapStringsSep ";" getLuaCPath [
+      (buildLuarocksPackage {
+        pname = "subprocess";
+        version = "bfa8e9";
+        src = fetchFromGitHub {
+          owner = "0x0ade"; # a developer of Everest
+          repo = "lua-subprocess";
+          rev = "bfa8e97da774141f301cfd1106dca53a30a4de54";
+          hash = "sha256-4LiYWB3PAQ/s33Yj/gwC+Ef1vGe5FedWexeCBVSDIV0=";
+        };
+        rockspecFilename = "subprocess-scm-1.rockspec";
+      })
+
+      (buildLuarocksPackage {
+        pname = "lsqlite3";
+        version = "0.9.6-1";
+        src = fetchzip {
+          url = "http://lua.sqlite.org/index.cgi/zip/lsqlite3_v096.zip";
+          hash = "sha256-Mq409A3X9/OS7IPI/KlULR6ZihqnYKk/mS/W/2yrGBg=";
+        };
+        buildInputs = [ sqlite.dev ];
+      })
+
+      nfd
+    ];
 
   # When installing Everest, Olympus uses MiniInstaller, which is dynamically linked.
   miniinstaller-fhs = buildFHSEnv {
@@ -61,12 +67,10 @@ let
   miniinstaller-wrapper = "${miniinstaller-fhs}/bin/${miniinstaller-fhs.name}";
 
   celeste-wrapper =
-    if celesteWrapper == null || builtins.typeOf celesteWrapper == "string" then
-      celesteWrapper
-    else if builtins.hasAttr "executable" celesteWrapper && celesteWrapper.executable then
-      celesteWrapper
-    else if lib.isDerivation celesteWrapper then
+    if lib.isDerivation celesteWrapper then
       lib.getExe celesteWrapper
+    else if celesteWrapper == null then
+      ""
     else
       celesteWrapper;
 
@@ -121,34 +125,24 @@ buildDotnetModule {
       --add-flags "--fused"
   '';
 
-  installPhase =
-    let
-      subprocess-cpath = "${lua-subprocess}/lib/lua/5.1/?.so";
-      nfd-cpath = "${nfd}/lib/lua/5.1/?.so";
-      lsqlite3-cpath = "${lsqlite3}/lib/lua/5.1/?.so";
-    in
-    ''
-      runHook preInstall
+  installPhase = ''
+    runHook preInstall
 
-      mkdir -p $out/bin
-      makeWrapper ${phome}/find-love $out/bin/olympus \
-        --prefix LUA_CPATH : "${nfd-cpath};${subprocess-cpath};${lsqlite3-cpath}" \
-        --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ curl ]} \
-        --set-default OLYMPUS_MINIINSTALLER_WRAPPER ${miniinstaller-wrapper} \
-        ${
-          lib.optionalString (
-            celeste-wrapper != null
-          ) "--set-default OLYMPUS_CELESTE_WRAPPER ${celeste-wrapper}"
-        } \
-        --add-flags "${phome}/olympus.love"
-      bsdtar --format zip --strip-components 1 -cf ${phome}/olympus.love src
+    mkdir -p $out/bin
+    makeWrapper ${phome}/find-love $out/bin/olympus \
+      --prefix LUA_CPATH ; "${lua_cpath}" \
+      --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ curl ]}" \
+      --set-default OLYMPUS_MINIINSTALLER_WRAPPER "${miniinstaller-wrapper}" \
+      --set-default OLYMPUS_CELESTE_WRAPPER "${celeste-wrapper}" \
+      --add-flags ${phome}/olympus.love
+    bsdtar --format zip --strip-components 1 -cf ${phome}/olympus.love src
 
-      dotnet_out=sharp/bin/Release/net452
-      dotnet_out=$dotnet_out/$(ls $dotnet_out)
-      install -Dm755 $dotnet_out/* -t ${phome}/sharp
+    dotnet_out=sharp/bin/Release/net452
+    dotnet_out=$dotnet_out/$(ls $dotnet_out)
+    install -Dm755 $dotnet_out/* -t ${phome}/sharp
 
-      runHook postInstall
-    '';
+    runHook postInstall
+  '';
 
   postInstall = ''
     install -Dm644 lib-linux/olympus.desktop $out/share/applications/olympus.desktop
