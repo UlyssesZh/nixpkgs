@@ -9,7 +9,6 @@
   jq,
   lib,
   llvmPackages,
-  llvmPackages_14,
   moreutils,
   protobuf,
   python3Packages,
@@ -824,6 +823,8 @@ let
           license = lib.licenses.mpl20;
         };
       };
+
+      budparr.language-hugo-vscode = callPackage ./budparr.language-hugo-vscode { };
 
       bungcip.better-toml = buildVscodeMarketplaceExtension {
         mktplcRef = {
@@ -2109,8 +2110,8 @@ let
           publisher = "github";
           name = "copilot";
           # Verify which version is available with nix run nixpkgs#vsce -- show github.copilot --json
-          version = "1.309.0";
-          hash = "sha256-i1PcbbOBgULd+inwypezE/ZsePrJaqM2z6qrDcNBLVA=";
+          version = "1.317.0";
+          hash = "sha256-w8HH1ibkOrpuKi3Yhzr+DjVIY7HWZ2L4rYzNYrHkfbc=";
         };
 
         meta = {
@@ -5119,7 +5120,7 @@ let
         };
       };
 
-      vadimcn.vscode-lldb = callPackage ./vadimcn.vscode-lldb { llvmPackages = llvmPackages_14; };
+      vadimcn.vscode-lldb = callPackage ./vadimcn.vscode-lldb { };
 
       valentjn.vscode-ltex = vscode-utils.buildVscodeMarketplaceExtension rec {
         mktplcRef = {

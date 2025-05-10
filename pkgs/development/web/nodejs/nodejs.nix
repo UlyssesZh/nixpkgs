@@ -25,7 +25,6 @@
   jq,
   curl,
   common-updater-scripts,
-  nix,
   runtimeShell,
   gnupg,
   installShellFiles,
@@ -414,12 +413,6 @@ let
               ++ lib.optionals (!lib.versionAtLeast version "22") [
                 "test-tls-multi-key"
               ]
-              ++ lib.optionals (lib.versionAtLeast version "24") [
-                # Checks for SQLite's RBU extension, which we don't enable by default.
-                "test-sqlite"
-                # Fails with readline error: 'Uncaught Error [ERR_USE_AFTER_CLOSE]: readline was closed',
-                "test-repl-import-referrer"
-              ]
               ++ lib.optionals stdenv.hostPlatform.is32bit [
                 # utime (actually utimensat) fails with EINVAL on 2038 timestamp
                 "test-fs-utimes-y2K38"
@@ -526,13 +519,13 @@ let
       passthru.updateScript = import ./update.nix {
         inherit
           writeScript
-          coreutils
-          gnugrep
-          jq
-          curl
           common-updater-scripts
+          coreutils
+          curl
+          fetchurl
+          gnugrep
           gnupg
-          nix
+          jq
           runtimeShell
           ;
         inherit lib;
