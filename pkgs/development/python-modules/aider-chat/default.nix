@@ -125,7 +125,7 @@ let
   aider-nltk-data = symlinkJoin {
     name = "aider-nltk-data";
     paths = [
-      nltk-data.punkt_tab
+      nltk-data.punkt-tab
       nltk-data.stopwords
     ];
   };
@@ -285,9 +285,6 @@ let
         "test_main_exit_calls_version_check"
         # AssertionError: assert 2 == 1
         "test_simple_send_non_retryable_error"
-        # Broken tests (Aider-AI/aider#3679)
-        "test_language_ocaml"
-        "test_language_ocaml_interface"
       ]
       ++ lib.optionals stdenv.hostPlatform.isDarwin [
         # Tests fails on darwin

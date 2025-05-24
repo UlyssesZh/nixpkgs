@@ -1181,8 +1181,8 @@ let
         mktplcRef = {
           name = "vscode-database-client2";
           publisher = "cweijan";
-          version = "8.3.1";
-          hash = "sha256-SLZkuWChkNt4+99kAauDx3Dz3wjnYEfTsFFH/i6ugeo=";
+          version = "8.3.2";
+          hash = "sha256-cBFc8F8FwP7rSWyRTZqi19MihwHE6xNpb4I4O+4zhWs=";
         };
         meta = {
           description = "Database Client For Visual Studio Code";
@@ -1326,8 +1326,8 @@ let
         mktplcRef = {
           publisher = "denoland";
           name = "vscode-deno";
-          version = "3.44.1";
-          hash = "sha256-biYQdt275OpbADEPPvraOPb5omRbQfkOX5+lWbU/kkw=";
+          version = "3.44.2";
+          hash = "sha256-fwQvAqyYXg2oAUXUef9nW/WzZGillx0XRyXd/cMy7Ho=";
         };
         meta = {
           changelog = "https://marketplace.visualstudio.com/items/denoland.vscode-deno/changelog";
@@ -1587,8 +1587,8 @@ let
           # semver scheme, contrary to preview versions which are listed on
           # the VSCode Marketplace and use a calver scheme. We should avoid
           # using preview versions, because they expire after two weeks.
-          version = "17.0.3";
-          hash = "sha256-jU1N5tJ4V3jzSNW9oE8AH5PRhTmsiIGnu65+IH5NxO0=";
+          version = "17.1.0";
+          hash = "sha256-WPSMf1yLXSDqImpMTxn1eXcSrimVSVjjaXDzFMQ/l0E=";
         };
         meta = {
           changelog = "https://marketplace.visualstudio.com/items/eamodio.gitlens/changelog";
@@ -1734,8 +1734,8 @@ let
         mktplcRef = {
           name = "vscode-great-icons";
           publisher = "emmanuelbeziat";
-          version = "2.1.118";
-          hash = "sha256-nc3MsBnvof9MxFsGLRojlGQ4jUK+ia4k2GPCEBSHpuI=";
+          version = "2.1.119";
+          hash = "sha256-mE9VU5K/+NLjHk/XQ7fb+wZ9FNAfsIwmPu7IAoei8Iw=";
         };
         meta = {
           license = lib.licenses.mit;
@@ -1841,8 +1841,8 @@ let
         mktplcRef = {
           name = "dependi";
           publisher = "fill-labs";
-          version = "0.7.14";
-          hash = "sha256-iLF2kxhSw39JBIs5K6hVmrEKueS8C22rnKCs+CiphwY=";
+          version = "0.7.15";
+          hash = "sha256-BXilurHO9WATC0PhT/scpZWEiRhJ9cSlq59opEM6wlE=";
         };
         meta = {
           changelog = "https://marketplace.visualstudio.com/items/fill-labs.dependi/changelog";
@@ -2117,8 +2117,8 @@ let
         mktplcRef = {
           publisher = "github";
           name = "vscode-pull-request-github";
-          version = "0.108.0";
-          hash = "sha256-GNNPc8nzNIrPOn+4ujKvhKodeHt9r1QlV8+EgqIz54I=";
+          version = "0.110.0";
+          hash = "sha256-roD6ugBm04L2IOKIQiAWULhhq4wo1O9VMYiYtdwCrCc=";
         };
         meta = {
           license = lib.licenses.mit;
@@ -2514,8 +2514,8 @@ let
         mktplcRef = {
           name = "Ionide-fsharp";
           publisher = "Ionide";
-          version = "7.25.8";
-          hash = "sha256-/pnLLFj6Iwn14GLGbuc2Ex7IbNmXFiH1Btd12cCGGes=";
+          version = "7.25.10";
+          hash = "sha256-2d12itLc9qBZZ7nQNS/80K46dde2RUKpkWgPwFxogIs=";
         };
         meta = {
           changelog = "https://marketplace.visualstudio.com/items/Ionide.Ionide-fsharp/changelog";
@@ -3752,6 +3752,8 @@ let
         };
       };
 
+      nhoizey.gremlins = callPackage ./nhoizey.gremlins { };
+
       nimlang.nimlang = callPackage ./nimlang.nimlang { };
 
       njpwerner.autodocstring = buildVscodeMarketplaceExtension {
@@ -3902,8 +3904,8 @@ let
         mktplcRef = {
           name = "material-icon-theme";
           publisher = "PKief";
-          version = "5.22.0";
-          hash = "sha256-E9UCSZe0hXnKwdNv6ua/Kzuy+wTFyeOGGVl7gFF4opY=";
+          version = "5.23.0";
+          hash = "sha256-numOqtLBqPKhlHXpdKtzg423vijR0p0a8f9niR2WrCc=";
         };
         meta = {
           description = "Material Design Icons for Visual Studio Code";
@@ -3949,8 +3951,8 @@ let
         mktplcRef = {
           name = "prisma";
           publisher = "Prisma";
-          version = "6.7.1";
-          hash = "sha256-qgWCC2aIUGS8XG9E8Z9Ya2BGBmL8RwRcHNdbJJFvPws=";
+          version = "6.8.2";
+          hash = "sha256-jortg6SQId1373+4p3Tbej2Q1oz2UhUf+o8xb4PmOVM=";
         };
         meta = {
           changelog = "https://marketplace.visualstudio.com/items/Prisma.prisma/changelog";
@@ -4285,8 +4287,8 @@ let
         mktplcRef = {
           name = "metals";
           publisher = "scalameta";
-          version = "1.50.0";
-          hash = "sha256-vMO1u8w4uQc0mvgB3az4G+QnwRwsz5d1+LpDGEShyDw=";
+          version = "1.51.0";
+          hash = "sha256-yLSOLVxulSH4b6EitMyws3FvKub/KXZHuIBGfri9thw=";
         };
         meta = {
           license = lib.licenses.asl20;
@@ -4387,8 +4389,8 @@ let
         mktplcRef = {
           publisher = "shopify";
           name = "ruby-lsp";
-          version = "0.9.23";
-          hash = "sha256-toCxWCMun+siVVXH6tjfe71XeAoXyEBiRRR0ViaMDUw=";
+          version = "0.9.24";
+          hash = "sha256-nlPqdn7tOQhr4Z/8N0aHAnkqKtYrpQCzwRGsseT8K5g=";
         };
         meta = {
           description = "VS Code plugin for connecting with the Ruby LSP";
@@ -4675,8 +4677,8 @@ let
         mktplcRef = {
           name = "svelte-vscode";
           publisher = "svelte";
-          version = "109.6.0";
-          hash = "sha256-oyeVtOcTqvcIhG+mq0TmQyOZcp7fENCpy3M7bkaP+N4=";
+          version = "109.8.0";
+          hash = "sha256-T0pNjjeKKX/T1Oc+zvOHu74H4r4F9Ogk5gDV7z0+D9I=";
         };
         meta = {
           changelog = "https://github.com/sveltejs/language-tools/releases";
@@ -4709,8 +4711,8 @@ let
         mktplcRef = {
           name = "tabnine-vscode";
           publisher = "tabnine";
-          version = "3.271.0";
-          hash = "sha256-+lNWQOfmoxT6+j+oqT4Z2QTYWSJbVwSukxEx4fwXqPc=";
+          version = "3.283.0";
+          hash = "sha256-zn58iml+uN6K1qneLqnikaL5Gyk4rmNXo8TKKlO88jA=";
         };
         meta = {
           license = lib.licenses.mit;
@@ -4823,6 +4825,8 @@ let
       tecosaur.latex-utilities = callPackage ./tecosaur.latex-utilities { };
 
       tekumara.typos-vscode = callPackage ./tekumara.typos-vscode { };
+
+      teros-technology.teroshdl = callPackage ./teros-technology-teroshdl { };
 
       theangryepicbanana.language-pascal = buildVscodeMarketplaceExtension {
         mktplcRef = {
@@ -4998,8 +5002,8 @@ let
         mktplcRef = {
           name = "uiua-vscode";
           publisher = "uiua-lang";
-          version = "0.0.63";
-          hash = "sha256-qlBcnQyH5VbgmBlTvVi59OpYtyuVrJLoSuRIbrBGFVE=";
+          version = "0.0.64";
+          hash = "sha256-mASTMZhXsM8IzaMmHsWRmf+pf1EjXyWsBMFXTcq7Acw=";
         };
         meta = {
           description = "VSCode language extension for Uiua";
@@ -5320,8 +5324,8 @@ let
         mktplcRef = {
           name = "vim";
           publisher = "vscodevim";
-          version = "1.29.0";
-          hash = "sha256-J3V8SZJZ2LSL8QfdoOtHI1ZDmGDVerTRYP4NZU17SeQ=";
+          version = "1.29.2";
+          hash = "sha256-RBh4yQxOoUpwNKedFjEeu6hO0tU9AAPlDrt2LhgZT50=";
         };
         meta = {
           license = lib.licenses.mit;

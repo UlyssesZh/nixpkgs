@@ -63,7 +63,6 @@ with lib.maintainers;
     shortName = "apm employees";
     # Edits to this list should only be done by an already existing member.
     members = [
-      wolfgangwalther
       DutchGerman
     ];
   };
@@ -1192,7 +1191,12 @@ with lib.maintainers;
   };
 
   systemd = {
-    members = [ ];
+    members = [
+      flokli
+      arianvp
+      elvishjerricco
+      aanderse
+    ];
     githubTeams = [ "systemd" ];
     scope = "Maintain systemd for NixOS.";
     shortName = "systemd";

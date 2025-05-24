@@ -711,6 +711,7 @@ in
   languagetool = handleTest ./languagetool.nix { };
   lanraragi = handleTest ./lanraragi.nix { };
   latestKernel.login = handleTest ./login.nix { latestKernel = true; };
+  lasuite-docs = runTest ./web-apps/lasuite-docs.nix;
   lavalink = runTest ./lavalink.nix;
   leaps = handleTest ./leaps.nix { };
   lemmy = handleTest ./lemmy.nix { };
@@ -975,6 +976,7 @@ in
   ombi = handleTest ./ombi.nix { };
   openarena = handleTest ./openarena.nix { };
   openbao = runTest ./openbao.nix;
+  opencloud = runTest ./opencloud.nix;
   openldap = handleTest ./openldap.nix { };
   opensearch = discoverTests (import ./opensearch.nix);
   openresty-lua = handleTest ./openresty-lua.nix { };
@@ -994,6 +996,7 @@ in
   orthanc = runTest ./orthanc.nix;
   owncast = handleTest ./owncast.nix { };
   outline = handleTest ./outline.nix { };
+  i18n = runTest ./i18n.nix;
   image-contents = handleTest ./image-contents.nix { };
   openvscode-server = handleTest ./openvscode-server.nix { };
   open-webui = runTest ./open-webui.nix;
@@ -1019,7 +1022,7 @@ in
   paperless = handleTest ./paperless.nix { };
   parsedmarc = handleTest ./parsedmarc { };
   password-option-override-ordering = handleTest ./password-option-override-ordering.nix { };
-  pdns-recursor = handleTest ./pdns-recursor.nix { };
+  pdns-recursor = runTest ./pdns-recursor.nix;
   pds = handleTest ./pds.nix { };
   peerflix = handleTest ./peerflix.nix { };
   peering-manager = handleTest ./web-apps/peering-manager.nix { };
@@ -1502,6 +1505,7 @@ in
   zipline = runTest ./zipline.nix;
   zoneminder = runTest ./zoneminder.nix;
   zookeeper = runTest ./zookeeper.nix;
+  zoom-us = runTest ./zoom-us.nix;
   zram-generator = runTest ./zram-generator.nix;
   zrepl = runTest ./zrepl.nix;
   zsh-history = runTest ./zsh-history.nix;

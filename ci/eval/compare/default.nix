@@ -1,15 +1,16 @@
 {
+  callPackage,
   lib,
   jq,
   runCommand,
   writeText,
   python3,
-  ...
 }:
 {
   beforeResultDir,
   afterResultDir,
   touchedFilesJson,
+  githubAuthorId,
   byName ? false,
 }:
 let
@@ -114,11 +115,19 @@ let
           # Adds "10.rebuild-*-stdenv" label if the "stdenv" attribute was changed
           ++ lib.mapAttrsToList (kernel: _: "10.rebuild-${kernel}-stdenv") (
             lib.filterAttrs (_: kernelRebuilds: kernelRebuilds ? "stdenv") rebuildsByKernel
-          );
+          )
+          # Adds the "11.by: package-maintainer" label if all of the packages directly
+          # changed are maintained by the PR's author. (https://github.com/NixOS/ofborg/blob/df400f44502d4a4a80fa283d33f2e55a4e43ee90/ofborg/src/tagger.rs#L83-L88)
+          ++ lib.optional (
+            maintainers ? ${githubAuthorId}
+            && lib.all (lib.flip lib.elem maintainers.${githubAuthorId}) (
+              lib.flatten (lib.attrValues maintainers)
+            )
+          ) "11.by: package-maintainer";
       }
     );
 
-  maintainers = import ./maintainers.nix {
+  maintainers = callPackage ./maintainers.nix { } {
     changedattrs = lib.attrNames (lib.groupBy (a: a.name) rebuildsPackagePlatformAttrs);
     changedpathsjson = touchedFilesJson;
     inherit byName;
