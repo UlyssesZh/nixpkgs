@@ -1,49 +1,30 @@
 {
   lib,
   fetchFromGitHub,
-  stdenv,
-  msbuild,
-  mono,
+  buildDotnetModule,
+  dotnetCorePackages,
   makeWrapper,
+  nix-update-script,
 }:
 
-let
+buildDotnetModule (finalAttrs: {
   pname = "spotlight-downloader";
-  version = "1.5.0";
-in
-stdenv.mkDerivation {
-  inherit pname version;
+  version = "2.0.0";
 
   src = fetchFromGitHub {
     owner = "ORelio";
     repo = "Spotlight-Downloader";
-    tag = "v${version}";
-    hash = "sha256-wGblbLBfH/sjUsz+hcg7OOWFavJ0k4piU/ypBEodvpY=";
+    tag = "v${finalAttrs.version}";
+    hash = "sha256-smBjoXtJGE6GVgIXb6UGz60geybi8RRzkkGX78E6YDQ=";
   };
 
-  nativeBuildInputs = [
-    msbuild
-    makeWrapper
-  ];
+  projectFile = "SpotlightDownloader/SpotlightDownloader.csproj";
+  nugetDeps = ./deps.json;
 
-  buildPhase = ''
-    runHook preBuild
+  dotnet-sdk = dotnetCorePackages.sdk_9_0;
+  dotnet-runtime = dotnetCorePackages.runtime_9_0;
 
-    msbuild /p:Configuration=Release SpotlightDownloader/SpotlightDownloader.csproj
-
-    runHook postBuild
-  '';
-
-  installPhase = ''
-    runHook preInstall
-
-    mkdir -p $out/bin $out/share
-    cp -r SpotlightDownloader/bin/Release $out/share/SpotlightDownloader
-    makeWrapper ${lib.getExe mono} $out/bin/SpotlightDownloader \
-      --add-flags "$out/share/SpotlightDownloader/SpotlightDownloader.exe"
-
-    runHook postInstall
-  '';
+  passthru.updateScript = nix-update-script { };
 
   meta = {
     description = "Retrieve Windows Spotlight images from the Microsoft Spotlight API";
@@ -53,4 +34,4 @@ stdenv.mkDerivation {
     platforms = lib.platforms.unix;
     mainProgram = "SpotlightDownloader";
   };
-}
+})
