@@ -1643,7 +1643,14 @@ in
   your_spotify = runTest ./your_spotify.nix;
   zammad = runTest ./zammad.nix;
   zenohd = runTest ./zenohd.nix;
-  zeronet-conservancy = runTest ./zeronet-conservancy.nix;
+  zeronet-conservancy = import ./zeronet.nix {
+    inherit runTest;
+    zeronet = pkgs.zeronet-conservancy;
+  };
+  zeronetx = import ./zeronet.nix {
+    inherit runTest;
+    zeronet = pkgs.zeronetx;
+  };
   zfs = handleTest ./zfs.nix { };
   zigbee2mqtt = runTest ./zigbee2mqtt.nix;
   zipline = runTest ./zipline.nix;
