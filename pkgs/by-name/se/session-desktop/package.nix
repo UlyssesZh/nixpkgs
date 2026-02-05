@@ -16,6 +16,7 @@
   nodejs,
   electron,
   jq,
+  tsx,
   python3,
   git,
   cmake,
@@ -29,93 +30,16 @@
 let
   fake-git = writeShellScriptBin "git" (lib.readFile ./fake-git.sh);
 
-  sqlcipher-src = stdenv.mkDerivation (finalAttrs: {
-    pname = "sqlcipher-src";
-    # when updating: look for the version in deps/download.js of @signalapp/better-sqlite3, whose version is in turn found in yarn.lock
-    version = "4.6.1";
-    src = fetchFromGitHub {
-      owner = "signalapp";
-      repo = "sqlcipher";
-      tag = "v${finalAttrs.version}-f_barrierfsync";
-      hash = "sha256-3fGRPZpJmLbY95DLJ34BK53ZTzJ1dWEzislXsOrTc8k=";
-    };
-
-    patches = [
-      # Needed to reproduce the build artifact from Signal's CI.
-      # TODO: find the actual CI workflow that produces
-      # https://build-artifacts.signal.org/desktop/sqlcipher-v2-4.6.1-signal-patch2--0.2.1-asm2-6253f886c40e49bf892d5cdc92b2eb200b12cd8d80c48ce5b05967cfd01ee8c7.tar.gz
-      # See also: https://github.com/signalapp/better-sqlite3/blob/v9.0.13/deps/defines.gypi#L33
-      # Building @signalapp/better-sqlite3 will require openssl without this patch.
-      (fetchpatch {
-        name = "sqlcipher-crypto-custom.patch";
-        url = "https://github.com/sqlcipher/sqlcipher/commit/702af1ff87528a78f5a9b2091806d3a5642e1d4a.patch";
-        hash = "sha256-OKh6qCGHBQWZyzXfyEveAs71wrNwlWLuG9jNqDeKNG4=";
-      })
-    ];
-
-    buildInputs = [
-      openssl
-      tcl
-    ];
-
-    # see https://github.com/signalapp/node-sqlcipher/blob/v2.4.4/deps/sqlcipher/update.sh
-    configureFlags = [ "--enable-update-limit" ];
-    makeFlags = [
-      "sqlite3.h"
-      "sqlite3.c"
-      "sqlite3ext.h"
-      "shell.c"
-    ];
-
-    installPhase = ''
-      runHook preInstall
-
-      mkdir -p $out
-      cp sqlite3.h sqlite3.c sqlite3ext.h shell.c $out
-
-      runHook postInstall
-    '';
-
-    meta = {
-      homepage = "https://github.com/signalapp/sqlcipher";
-      license = lib.licenses.bsd3;
-    };
-  });
-
-  signal-sqlcipher-extension = rustPlatform.buildRustPackage (finalAttrs: {
-    pname = "signal-sqlcipher-extension";
-    # when updating: look for the version in deps/download.js of @signalapp/better-sqlite3, whose version is in turn found in yarn.lock
-    version = "0.2.1";
-    src = fetchFromGitHub {
-      owner = "signalapp";
-      repo = "Signal-Sqlcipher-Extension";
-      rev = "v${finalAttrs.version}";
-      hash = "sha256-INSkm7ZuetPASuIqezzzG/bXoEHClUb9XpxWbxLVXRc=";
-    };
-
-    cargoHash = "sha256-qT4HM/FRL8qugKKNlMYM/0zgUsC6cDOa9fgd1d4VIrc=";
-
-    postInstall = ''
-      mkdir -p $out/include
-      cp target/*.h $out/include
-    '';
-
-    meta = {
-      homepage = "https://github.com/signalapp/Signal-Sqlcipher-Extension";
-      license = lib.licenses.agpl3Only;
-    };
-  });
-
   libsession-util-nodejs = stdenv.mkDerivation (finalAttrs: {
     pname = "libsession-util-nodejs";
-    version = "0.6.5"; # find version in yarn.lock
+    version = "0.6.9"; # find version in yarn.lock
     src = fetchFromGitHub {
       owner = "session-foundation";
       repo = "libsession-util-nodejs";
       tag = "v${finalAttrs.version}";
       fetchSubmodules = true;
       deepClone = true; # need git rev for all submodules
-      hash = "sha256-T6qjpXZPGkRfBcJCd/4XGNEBZILEG2Py2zN8W2c1Tlc=";
+      hash = "sha256-Ei77Fk4KjdnIVz2w5kkHcFishd/tGxzmb0eNnFBHQwc=";
       # fetchgit is not reproducible with deepClone + fetchSubmodules:
       # https://github.com/NixOS/nixpkgs/issues/100498
       postFetch = ''
@@ -179,28 +103,40 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "session-desktop";
-  version = "1.17.5";
-  src = fetchFromGitHub {
-    owner = "session-foundation";
-    repo = "session-desktop";
-    tag = "v${finalAttrs.version}";
-    leaveDotGit = true;
-    hash = "sha256-qx5e3HfmhB7Edr+KYK+SJfQhF19ct/40v6eIqExw+iU=";
-    postFetch = ''
-      pushd $out
-      git rev-parse HEAD > .gitrev
-      rm -rf .git
-      popd
-    '';
-  };
+  version = "1.17.8";
+  src =
+    (fetchFromGitHub {
+      owner = "session-foundation";
+      repo = "session-desktop";
+      tag = "v${finalAttrs.version}";
+      fetchSubmodules = true;
+      leaveDotGit = true;
+      postFetch = ''
+        pushd $out
+        git rev-parse HEAD > .gitrev
+        rm -rf .git
+        popd
+      '';
+      hash = "sha256-oDD1b+s+V/EfhnPsOuckr2wZSKKd+YhV0cR98oPLtBo=";
+    }).overrideAttrs
+      (oldAttrs: {
+        # https://github.com/NixOS/nixpkgs/issues/195117#issuecomment-1410398050
+        env = oldAttrs.env or { } // {
+          GIT_CONFIG_COUNT = 1;
+          GIT_CONFIG_KEY_0 = "url.https://github.com/.insteadOf";
+          GIT_CONFIG_VALUE_0 = "git@github.com:";
+        };
+      });
 
   postPatch = ''
     jq '
       del(.engines) # too restrictive Node version requirement
-      # control what files are packed in the install phase
-      + {files: ["**/*.js", "**/*.html", "**/*.node", "_locales", "config", "fonts", "images", "mmdb", "mnemonic_languages", "protos", "sound", "stylesheets"]}
+      + {files: ["app"]} # control what files are packed in the install phase
     ' package.json > package.json.new
     mv package.json.new package.json
+
+    # use tsx from nixpkgs instead of using npx to download it
+    sed -i 's|npx -y tsx|${lib.getExe tsx}|g' package.json
   '';
 
   nativeBuildInputs = [
@@ -234,27 +170,16 @@ stdenv.mkDerivation (finalAttrs: {
     # copy the modified yarn.lock here, and use `./yarn.lock` instead of `"${finalAttrs.src}/yarn.lock"`,
     # and also add `cp ${./yarn.lock} yarn.lock` to postPatch.
     yarnLock = "${finalAttrs.src}/yarn.lock";
-    hash = "sha256-5MqCwXe/BflIymZiggtAE6XgBa/S4Qoh7KzWokU+L5c=";
+    hash = "sha256-RojQPXHyrG+df6S7+A/ev9xegvY4kpVHH6xdZHuYqxI=";
   };
 
   preBuild = ''
-    # prevent downloading
-    pushd node_modules/@signalapp/better-sqlite3/deps
-    tar -czf sqlcipher.tar.gz \
-      -C ${signal-sqlcipher-extension} lib include \
-      -C ${sqlcipher-src} . \
-      --transform="s,^lib,./signal-sqlcipher-extension/${stdenv.targetPlatform.rust.cargoShortTarget}," \
-      --transform="s,^include,./signal-sqlcipher-extension/include,"
-    hash=$(sha256sum sqlcipher.tar.gz | cut -d' ' -f1)
-    sed -i "s/^const HASH = '.*';/const HASH = '$hash';/" download.js
-    popd
-
     export NODE_ENV=production
 
     # rebuild native modules except libsession_util_nodejs
     rm -rf node_modules/libsession_util_nodejs
     npm rebuild --verbose --offline --no-progress --release # why doesn't yarn have `rebuild`?
-    cp -r ${libsession-util-nodejs}/lib/node_modules/libsession_util_nodejs node_modules
+    cp -r ${finalAttrs.passthru.libsession-util-nodejs}/lib/node_modules/libsession_util_nodejs node_modules
     chmod -R +w node_modules/libsession_util_nodejs
     rm -rf node_modules/libsession_util_nodejs/node_modules
 
@@ -268,18 +193,24 @@ stdenv.mkDerivation (finalAttrs: {
   '';
 
   postInstall = ''
+    phome="$out/lib/node_modules/session-desktop"
+
     find node_modules.dev -mindepth 2 -maxdepth 3 -type d -name build  | while read -r buildDir; do
       packageDir=$(dirname ''${buildDir#node_modules.dev/})
-      installPackageDir="$out/lib/node_modules/session-desktop/node_modules/$packageDir"
+      installPackageDir="$phome/node_modules/$packageDir"
       if [ -d "$installPackageDir" ]; then
         cp -r "$buildDir" "$installPackageDir"
       fi
     done
 
+    mv $phome/app/* $phome
+    rm -r $phome/app
+
     makeWrapper ${lib.getExe electron} $out/bin/session-desktop \
-      --add-flags $out/lib/node_modules/session-desktop \
+      --add-flags $phome \
       --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--ozone-platform-hint=auto --enable-features=WaylandWindowDecorations --enable-wayland-ime=true}}" \
       --set NODE_ENV production \
+      --suffix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ stdenv.cc.cc ]}" \
       --inherit-argv0
 
     for f in build/icons/icon_*.png; do
@@ -313,7 +244,7 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   passthru = {
-    inherit sqlcipher-src signal-sqlcipher-extension libsession-util-nodejs;
+    inherit libsession-util-nodejs;
     updateScript = ./update.sh;
   };
 
