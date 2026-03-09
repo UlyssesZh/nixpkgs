@@ -19,13 +19,13 @@ assert stdenv.hostPlatform.isDarwin -> (!enableWlrSupport);
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "flameshot";
-  version = "13.3.0";
+  version = "13.3.0-unstable-2026-03-08";
 
   src = fetchFromGitHub {
     owner = "flameshot-org";
     repo = "flameshot";
-    tag = "v${finalAttrs.version}";
-    hash = "sha256-RyoLniRmJRinLUwgmaA4RprYAVHnoPxCP9LyhHfUPe0=";
+    rev = "7a67146795935c945432b316c5ba41f8e7ab8b53";
+    hash = "sha256-L6csW58QT36Lr5Zqmityc8oDqwt4m2/ZxmbCEgdSGoY=";
   };
 
   cmakeFlags = [
@@ -41,13 +41,9 @@ stdenv.mkDerivation (finalAttrs: {
     (lib.cmakeFeature "Qt6_DIR" "${kdePackages.qtbase}/lib/cmake/Qt6")
   ];
 
-  # 1. "load-missing-deps" prevents from build inputs being fetched via GitHub.
-  # 2. "macos-build" mainly patches out the use of codesigning + macdeployqt,
-  #    which incorrectly fetches Qt libraries.
-  # 2.1 Also fixes target link to "kdsingpleapplications-qt6" as in Nixpkgs.
+  # "load-missing-deps" prevents from build inputs being fetched via GitHub.
   patches = [
     ./load-missing-deps.patch
-    ./macos-build.patch
   ];
 
   nativeBuildInputs = [
@@ -125,6 +121,7 @@ stdenv.mkDerivation (finalAttrs: {
       scode
       oxalica
       dmkhitaryan
+      ulysseszhan
     ];
     license = lib.licenses.gpl3Plus;
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
