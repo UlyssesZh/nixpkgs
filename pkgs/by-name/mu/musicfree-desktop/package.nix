@@ -7,7 +7,7 @@
   copyDesktopItems,
   makeWrapper,
   nix-update-script,
-  electron_43,
+  electron,
   python3,
   nodejs,
   vips,
@@ -16,9 +16,7 @@
   xcodebuild,
   zip,
 }:
-let
-  electron = electron_43;
-in
+
 buildNpmPackage (finalAttrs: {
   pname = "musicfree-desktop";
   version = "0.0.8";

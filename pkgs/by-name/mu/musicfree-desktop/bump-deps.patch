@@ -1142,9 +1142,9 @@
 -      "version": "2.17.0",
 -      "resolved": "https://registry.npmmirror.com/nan/-/nan-2.17.0.tgz",
 -      "integrity": "sha512-2ZTgtl0nJsO0KQCjEpxcIr5D+Yv90plTitZt9JBfQvVJDS5seMl3FOvsh3+9CoYWXf/1l5OaZzzF6nDm4cagaQ==",
-+      "version": "2.29.0",
-+      "resolved": "https://registry.npmjs.org/nan/-/nan-2.29.0.tgz",
-+      "integrity": "sha512-GlGk3HIvitbvs+LT3g6XUP1kpirKNvmDFwF/bmo6XNWSb/eYEs/O4bfgIEIXCZ+lIOTS5xNwDvSGMw6FJdAhtA==",
++      "version": "2.30.0",
++      "resolved": "https://registry.npmjs.org/nan/-/nan-2.30.0.tgz",
++      "integrity": "sha512-P5mokDkSvCGBz6mZDD/2l+w9QoICRXdCyZ9ONGmTePr40oihJg3Kpn0YU3twKd6PJnwSlLBWNQeOT6yWEV2c4A==",
        "dev": true,
 +      "license": "MIT",
        "optional": true
@@ -1157,9 +1157,9 @@
 -      "version": "3.47.0",
 -      "resolved": "https://registry.npmmirror.com/node-abi/-/node-abi-3.47.0.tgz",
 -      "integrity": "sha512-2s6B2CWZM//kPgwnuI0KrYwNjfdByE25zvAaEpq9IH4zcNsarH8Ihu/UuX6XMPEogDAxkuUFeZn60pXNHAqn3A==",
-+      "version": "3.96.0",
-+      "resolved": "https://registry.npmjs.org/node-abi/-/node-abi-3.96.0.tgz",
-+      "integrity": "sha512-rebQ/lz7i0EkoLzUVSrKRzA69zMkwLp95kKMWoMDkkM00Suxz0D7zEQPwRml5fQum24mj7bPvmlgLAmu2JCiYg==",
++      "version": "3.101.0",
++      "resolved": "https://registry.npmjs.org/node-abi/-/node-abi-3.101.0.tgz",
++      "integrity": "sha512-bkb/RkuWCE64eWu1PCh3Fu2pGc9mKRs+kOE+FU2bGHRYlQa86/D321DSATV54AsCQMKz3/xSt9sRgraZTpqdhQ==",
 +      "license": "MIT",
        "dependencies": {
          "semver": "^7.3.5"
@@ -1826,9 +1826,9 @@
 -      "version": "7.6.2",
 -      "resolved": "https://registry.npmmirror.com/semver/-/semver-7.6.2.tgz",
 -      "integrity": "sha512-FNAIBWCx9qcRhoHcgcJ0gvU7SN1lYU2ZXuSfl04bSC5OpvDHFyJCjdNHomPXxjQlCBU67YW64PzY7/VIEH7F2w==",
-+      "version": "7.8.5",
-+      "resolved": "https://registry.npmjs.org/semver/-/semver-7.8.5.tgz",
-+      "integrity": "sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==",
++      "version": "7.8.6",
++      "resolved": "https://registry.npmjs.org/semver/-/semver-7.8.6.tgz",
++      "integrity": "sha512-9lpSSU4Mly3mrtruwLs1eLK6+gzbzqeBFwRNjIjE+9LuDpWdYctrQlQ3ej1Ilgi7gknpsTRnPoLP8DpCHqHIJw==",
 +      "license": "ISC",
        "bin": {
          "semver": "bin/semver.js"
